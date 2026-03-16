@@ -65,13 +65,13 @@ jobs:
             // 対象プロジェクトのアイテムを特定
             const item = issue.projectItems.nodes.find(i => i.project.id === projectId);
             if (!item) {
-              core.info('この issue は @masutaka-test-project プロジェクトに属していません。スキップします。');
+              core.notice('この issue は @masutaka-test-project プロジェクトに属していません。スキップします。');
               return;
             }
 
             // 完了日が設定済みならスキップ
             if (item.fieldValueByName?.date) {
-              core.info(`完了日は既に設定されています: ${item.fieldValueByName.date}。スキップします。`);
+              core.notice(`完了日は既に設定されています: ${item.fieldValueByName.date}。スキップします。`);
               return;
             }
 
@@ -99,4 +99,4 @@ jobs:
               date: dateValue,
             });
 
-            core.info(`完了日を設定しました: ${dateValue}`);
+            core.notice(`完了日を設定しました: ${dateValue}`);
