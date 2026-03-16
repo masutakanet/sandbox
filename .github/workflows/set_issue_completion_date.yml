@@ -1,0 +1,102 @@
+# issue を close した時に、@masutaka-test-project プロジェクトの「完了日」フィールドに
+# close 日（JST 基準）を自動設定する。
+#
+# プロジェクト: https://github.com/orgs/masutakanet/projects/1
+#
+# 前提:
+# - プロジェクトへの書き込みには GITHUB_TOKEN では権限が足りないため、
+#   fine-grained PAT を secrets.PROJECT_PAT に登録する必要がある
+#   - Resource owner: masutakanet
+#   - Repository access: sandbox のみ
+#   - Organization permissions: Projects: Read and write
+#   - 追加の Repository permissions が必要な場合がある。PAT 作成時に事前検証すること
+# - 「完了日」が設定済みの場合は上書きしない
+
+name: Set issue completion date
+
+on:
+  issues:
+    types: [closed]
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  set-completion-date:
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    permissions: {}
+
+    steps:
+      - name: Set completion date on project
+        uses: actions/github-script@v8
+        env:
+          PROJECT_ID: PVT_kwDOCm_oss4BR37e # @masutaka-test-project
+          FIELD_ID: PVTF_lADOCm_oss4BR37ezg_knmU # 完了日
+        with:
+          github-token: ${{ secrets.PROJECT_PAT }}
+          script: |
+            const projectId = process.env.PROJECT_ID;
+            const fieldId = process.env.FIELD_ID;
+            const issueNodeId = context.payload.issue.node_id;
+
+            // issue に紐づくプロジェクトアイテムを取得し、完了日の現在値も同時に取得
+            const { node: issue } = await github.graphql(`
+              query($issueId: ID!) {
+                node(id: $issueId) {
+                  ... on Issue {
+                    projectItems(first: 50) {
+                      nodes {
+                        id
+                        project { id }
+                        fieldValueByName(name: "完了日") {
+                          ... on ProjectV2ItemFieldDateValue {
+                            date
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `, { issueId: issueNodeId });
+
+            // 対象プロジェクトのアイテムを特定
+            const item = issue.projectItems.nodes.find(i => i.project.id === projectId);
+            if (!item) {
+              core.info('この issue は @masutaka-test-project プロジェクトに属していません。スキップします。');
+              return;
+            }
+
+            // 完了日が設定済みならスキップ
+            if (item.fieldValueByName?.date) {
+              core.info(`完了日は既に設定されています: ${item.fieldValueByName.date}。スキップします。`);
+              return;
+            }
+
+            // closed_at を JST (UTC+9) に変換して YYYY-MM-DD にする
+            const closedAt = new Date(context.payload.issue.closed_at);
+            const jstDate = new Date(closedAt.getTime() + 9 * 60 * 60 * 1000);
+            const dateValue = jstDate.toISOString().slice(0, 10);
+
+            // 完了日を設定
+            await github.graphql(`
+              mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $date: Date!) {
+                updateProjectV2ItemFieldValue(input: {
+                  projectId: $projectId
+                  itemId: $itemId
+                  fieldId: $fieldId
+                  value: { date: $date }
+                }) {
+                  projectV2Item { id }
+                }
+              }
+            `, {
+              projectId,
+              itemId: item.id,
+              fieldId,
+              date: dateValue,
+            });
+
+            core.info(`完了日を設定しました: ${dateValue}`);
