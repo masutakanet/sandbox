@@ -40,6 +40,7 @@ jobs:
             const projectId = process.env.PROJECT_ID;
             const fieldId = process.env.FIELD_ID;
             const issueNodeId = context.payload.issue.node_id;
+            const issueUrl = context.payload.issue.html_url;
 
             // issue に紐づくプロジェクトアイテムを取得し、完了日の現在値も同時に取得
             const { node: issue } = await github.graphql(`
@@ -65,13 +66,13 @@ jobs:
             // 対象プロジェクトのアイテムを特定
             const item = issue.projectItems.nodes.find(i => i.project.id === projectId);
             if (!item) {
-              core.notice('この issue は @masutaka-test-project プロジェクトに属していません。スキップします。');
+              core.notice(`この issue は @masutaka-test-project プロジェクトに属していません。スキップします。 ${issueUrl}`);
               return;
             }
 
             // 完了日が設定済みならスキップ
             if (item.fieldValueByName?.date) {
-              core.notice(`完了日は既に設定されています: ${item.fieldValueByName.date}。スキップします。`);
+              core.notice(`完了日は既に設定されています: ${item.fieldValueByName.date}。スキップします。 ${issueUrl}`);
               return;
             }
 
@@ -99,4 +100,4 @@ jobs:
               date: dateValue,
             });
 
-            core.notice(`完了日を設定しました: ${dateValue}`);
+            core.notice(`完了日を設定しました: ${dateValue} ${issueUrl}`);
