@@ -5,7 +5,7 @@
 #
 # 前提:
 # - プロジェクトへの書き込みには GITHUB_TOKEN では権限が足りないため、
-#   fine-grained PAT を secrets.PROJECT_PAT に登録する必要がある
+#   fine-grained PAT を secrets.PROJECTS_WRITE_PAT に登録する必要がある
 #   - Resource owner: masutakanet
 #   - Repository access: sandbox のみ
 #   - Organization permissions: Projects: Read and write
@@ -35,7 +35,7 @@ jobs:
           PROJECT_ID: PVT_kwDOCm_oss4BR37e # @masutaka-test-project
           FIELD_ID: PVTF_lADOCm_oss4BR37ezg_knmU # 完了日
         with:
-          github-token: ${{ secrets.PROJECT_PAT }}
+          github-token: ${{ secrets.PROJECTS_WRITE_PAT }}
           script: |
             const projectId = process.env.PROJECT_ID;
             const fieldId = process.env.FIELD_ID;
@@ -46,7 +46,7 @@ jobs:
               query($issueId: ID!) {
                 node(id: $issueId) {
                   ... on Issue {
-                    projectItems(first: 50) {
+                    projectItems(first: 10) {
                       nodes {
                         id
                         project { id }
