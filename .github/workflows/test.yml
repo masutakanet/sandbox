@@ -12,7 +12,7 @@
 #   - 追加の Repository permissions が必要な場合がある。PAT 作成時に事前検証すること
 # - 「完了日」が設定済みの場合は上書きしない
 
-name: Set issue completion date
+name: aaa
 
 on:
   workflow_dispatch:
