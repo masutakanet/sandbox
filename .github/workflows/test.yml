@@ -30,11 +30,12 @@ jobs:
     steps:
       - name: prepare
         run: |
-            ls -alF /usr/local
+            ls -alF /usr/local/bin
             cat <<EOF > /usr/local/bin/aaa
             #!/bin/sh
             echo aaaaaaaaaaaaaa
             EOF
             chmod a+x /usr/local/bin/aaa
+            ls -alF /usr/local/bin
       - name: runaaa
         run: aaa
