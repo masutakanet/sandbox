@@ -1,0 +1,40 @@
+# issue を close した時に、@masutaka-test-project プロジェクトの「完了日」フィールドに
+# close 日（JST 基準）を自動設定する。
+#
+# プロジェクト: https://github.com/orgs/masutakanet/projects/1
+#
+# 前提:
+# - プロジェクトへの書き込みには GITHUB_TOKEN では権限が足りないため、
+#   fine-grained PAT を secrets.PROJECTS_WRITE_PAT に登録する必要がある
+#   - Resource owner: masutakanet
+#   - Repository access: sandbox のみ
+#   - Organization permissions: Projects: Read and write
+#   - 追加の Repository permissions が必要な場合がある。PAT 作成時に事前検証すること
+# - 「完了日」が設定済みの場合は上書きしない
+
+name: Set issue completion date
+
+on:
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  test:
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    permissions: {}
+
+    steps:
+      - name: prepare
+        run: |
+            ls -alF /usr/local
+            cat <<EOF > /usr/local/bin/aaa
+            #!/bin/sh
+            echo aaaaaaaaaaaaaa
+            EOF
+            chmod a+x /usr/local/bin/aaa
+      - name: runaaa
+        run: aaa
